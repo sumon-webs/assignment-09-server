@@ -4,6 +4,7 @@ const dotenv = require("dotenv")
 const port = process.env.PORT || 5000
 const cors = require("cors")
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const { createRemoteJWKSet, jwtVerify } = require("jose-cjs")
 dotenv.config()
 
 app.use(cors())
@@ -31,7 +32,37 @@ async function run() {
         const doctorsCollection = database.collection("doctors");
         const appointsCollection = database.collection("appoints");
 
-        app.get('/doctors', async (req, res) => {
+        const jwks = createRemoteJWKSet(
+            new URL("http://localhost:3000/api/auth/jwks")
+        )
+
+        const varifyToken = async (req, res, next) => {
+            console.log("Hit")
+            const authHeaders = req?.headers.authorization
+
+            if (!authHeaders) {
+                return res.status(401).json({
+                    message: 'Unauthorize'
+                })
+            }
+
+            const token = authHeaders.split(' ')[1]
+            if (!token) {
+                return res.status('401').json({
+                    message: 'Unauthorizw'
+                })
+            }
+            try {
+                const { playload } = await jwtVerify(token, jwks)
+                next()
+            } catch (error) {
+                return res.status(401).json({
+                    message: 'Forbidden'
+                })
+            }
+        }
+
+        app.get('/doctors', varifyToken, async (req, res) => {
             try {
                 const result = await doctorsCollection.find().toArray()
 
