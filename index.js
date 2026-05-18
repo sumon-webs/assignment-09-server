@@ -33,11 +33,10 @@ async function run() {
         const appointsCollection = database.collection("appoints");
 
         const jwks = createRemoteJWKSet(
-            new URL("http://localhost:3000/api/auth/jwks")
+            new URL(`${process.env.JKS_PORT}/api/auth/jwks`)
         )
 
         const varifyToken = async (req, res, next) => {
-            console.log("Hit")
             const authHeaders = req?.headers.authorization
 
             if (!authHeaders) {
@@ -53,7 +52,7 @@ async function run() {
                 })
             }
             try {
-                const { playload } = await jwtVerify(token, jwks)
+                const { payload } = await jwtVerify(token, jwks)
                 next()
             } catch (error) {
                 return res.status(401).json({
@@ -63,24 +62,40 @@ async function run() {
         }
 
         app.get('/doctors', varifyToken, async (req, res) => {
+
             try {
-                const result = await doctorsCollection.find().toArray()
+                const search = req.query.search || "";
 
-                res.status(500).send({
+                console.log("Hit", search);
+
+                let query = {};
+
+                if (search.trim() !== "") {
+                    query = {
+                        name: {
+                            $regex: search,
+                            $options: "i"
+                        }
+                    };
+                }
+
+                const result = await doctorsCollection.find(query).toArray();
+
+                return res.status(200).send({
                     success: true,
-                    message: "Fatch success",
+                    message: "Fetch success",
                     data: result
-                })
+                });
+
             } catch (error) {
-                res.status(500).send({
+                return res.status(500).send({
                     success: false,
-                    message: ('Error: Failed to fetch')
-
-                })
+                    message: "Failed to fetch doctors"
+                });
             }
+        });
 
-        })
-
+        
         app.get('/top-rated', async (req, res) => {
             try {
                 const result = await doctorsCollection
