@@ -29,6 +29,7 @@ async function run() {
         // await client.connect();
         const database = client.db("DocAppoint");
         const doctorsCollection = database.collection("doctors");
+        const appointsCollection = database.collection("appoints");
 
         app.get('/doctors', async (req, res) => {
             try {
@@ -48,14 +49,14 @@ async function run() {
             }
 
         })
-        
+
         app.get('/top-rated', async (req, res) => {
             try {
                 const result = await doctorsCollection
-                .find()
-                .sort({rating:-1})
-                .limit(3)
-                .toArray()
+                    .find()
+                    .sort({ rating: -1 })
+                    .limit(3)
+                    .toArray()
 
                 res.status(500).send({
                     success: true,
@@ -102,6 +103,65 @@ async function run() {
             }
         });
 
+        app.post('/appoints', async (req, res) => {
+            try {
+                const appointData = req.body;
+
+                // validation
+                if (!appointData?.doctorName || !appointData?.userEmail) {
+                    return res.status(400).json({
+                        success: false,
+                        message: "Required fields missing"
+                    });
+                }
+
+                const exist = await appointsCollection.findOne({
+                    doctorId: appointData.doctorId,
+                    date: appointData.date,
+                    time: appointData.time
+                });
+
+                if (exist) {
+                    return res.status(409).json({
+                        success: false,
+                        message: "Appoint already exist. You may select same date and time"
+                    });
+                }
+                const result = await appointsCollection.insertOne(appointData);
+
+                return res.status(201).json({
+                    success: true,
+                    message: `${appointData.doctorName}'s appointment created successfully`,
+                    data: result
+                });
+
+            } catch (error) {
+                console.error(error);
+
+                return res.status(500).json({
+                    success: false,
+                    message: "Server error"
+                });
+            }
+        });
+        app.get('/appoints', async (req, res) => {
+            try {
+                const result = await appointsCollection.find().toArray()
+
+                res.status(500).send({
+                    success: true,
+                    message: "Fatch success",
+                    data: result
+                })
+            } catch (error) {
+                res.status(500).send({
+                    success: false,
+                    message: ('Error: Failed to fetch')
+
+                })
+            }
+
+        })
         // await client.db("admin").command({ ping: 1 });
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
     } finally {
