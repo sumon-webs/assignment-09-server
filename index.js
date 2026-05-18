@@ -209,6 +209,43 @@ async function run() {
             }
 
         })
+        app.patch('/appoints/:userId/:id', async (req, res) => {
+            try {
+                const { userId, id } = req.params;
+                const updateData = req.body;
+
+                const filter = {
+                    _id: new ObjectId(id),
+                    userId: userId
+                };
+
+                const updateDoc = {
+                    $set: updateData
+                };
+
+                const result = await appointsCollection.updateOne(filter, updateDoc);
+
+                if (result.modifiedCount === 0) {
+                    return res.status(404).send({
+                        success: false,
+                        message: "No appointment updated"
+                    });
+                }
+
+                res.status(200).send({
+                    success: true,
+                    message: "Appointment updated successfully",
+                    data: result
+                });
+
+            } catch (error) {
+                res.status(500).send({
+                    success: false,
+                    message: "Update failed",
+                    error: error.message
+                });
+            }
+        });
         // await client.db("admin").command({ ping: 1 });
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
     } finally {
