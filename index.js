@@ -162,6 +162,53 @@ async function run() {
             }
 
         })
+
+        app.get('/appoints/:userId', async (req, res) => {
+            try {
+                const { userId } = req.params
+                const result = await appointsCollection.find({
+                    userId: userId
+                }).toArray()
+
+                if (userId) {
+                    res.status(500).send({
+                        success: true,
+                        message: 'Data get success',
+                        data: result,
+
+                    })
+                }
+            } catch (error) {
+                res.status(500).send({
+                    success: false,
+                    message: "Error"
+                })
+            }
+
+
+        })
+
+        app.delete('/appoints/:userId/:id', async (req, res) => {
+            try {
+                const { userId, id } = req.params
+
+                const result = await appointsCollection.deleteOne({
+                    _id: new ObjectId(id),
+                    userId: userId
+                })
+                res.status(500).send({
+                    success: true,
+                    message: "Delete success",
+                    data: result
+                })
+            } catch (error) {
+                res.status(5000).send({
+                    success: false,
+                    message: 'Error'
+                })
+            }
+
+        })
         // await client.db("admin").command({ ping: 1 });
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
     } finally {
