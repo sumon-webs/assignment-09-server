@@ -48,6 +48,29 @@ async function run() {
             }
 
         })
+        
+        app.get('/top-rated', async (req, res) => {
+            try {
+                const result = await doctorsCollection
+                .find()
+                .sort({rating:-1})
+                .limit(3)
+                .toArray()
+
+                res.status(500).send({
+                    success: true,
+                    message: "Fatch success",
+                    data: result
+                })
+            } catch (error) {
+                res.status(500).send({
+                    success: false,
+                    message: ('Error: Failed to fetch')
+
+                })
+            }
+
+        })
 
         app.get('/doctors/:id', async (req, res) => {
             try {
