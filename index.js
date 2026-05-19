@@ -61,7 +61,7 @@ async function run() {
             }
         }
 
-        app.get('/doctors', varifyToken, async (req, res) => {
+        app.get('/doctors', async (req, res) => {
 
             try {
                 const search = req.query.search || "";
@@ -157,7 +157,7 @@ async function run() {
                 if (!appointData?.doctorName || !appointData?.userEmail) {
                     return res.status(400).json({
                         success: false,
-                        message: "Required fields missing"
+                        message: "Required fields missing, may be you not loged in"
                     });
                 }
 
